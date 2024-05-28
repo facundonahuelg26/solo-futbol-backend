@@ -13,7 +13,6 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
   ) {}
-
   async authUser(user: AuthUserDto) {
     const userExist = await this.prisma.user.findUnique({
       where: { email: user.email },
@@ -27,7 +26,16 @@ export class AuthService {
     }
 
     const payload = { sub: userExist.id, email: userExist.email }
-    const token = await this.jwtService.signAsync(payload)
+
+    // Generar el token de acceso con una duración corta
+    const token = await this.jwtService.signAsync(payload, {
+      expiresIn: '40m',
+    })
+
+    // Generar el token de refresco con una duración más larga
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '1d',
+    })
 
     // Verificar si el token de refresco ya existe para el usuario
     const existingRefreshToken = await this.prisma.refreshToken.findUnique({
@@ -35,16 +43,16 @@ export class AuthService {
     })
 
     if (existingRefreshToken) {
-      // Si ya existe, actualizar el token
+      // Si ya existe, actualizar el token de refresco
       await this.prisma.refreshToken.update({
         where: { userId: userExist.id },
-        data: { token: token },
+        data: { token: refreshToken },
       })
     } else {
-      // Si no existe, crear un nuevo token
+      // Si no existe, crear un nuevo token de refresco
       await this.prisma.refreshToken.create({
         data: {
-          token: token,
+          token: refreshToken,
           userId: userExist.id,
         },
       })
@@ -52,7 +60,8 @@ export class AuthService {
 
     return {
       email: userExist.email,
-      token: token,
+      accessToken: token,
+      refreshToken: refreshToken,
     }
   }
 
@@ -69,7 +78,10 @@ export class AuthService {
       })
 
       if (!refreshTokenData) {
-        throw new BadRequestException('Invalid refresh token')
+        console.log('estoy aca 1', refreshTokenData)
+        throw new BadRequestException(
+          'Invalid refresh token: Token not found in database',
+        )
       }
 
       // Busca los datos del usuario asociados con el refreshToken
@@ -78,25 +90,49 @@ export class AuthService {
       })
 
       if (!user) {
-        throw new BadRequestException('User not found')
+        throw new BadRequestException('Invalid refresh token: User not found')
       }
 
       // Verifica si el refreshToken coincide con el almacenado en la base de datos
       if (refreshTokenData.token !== refreshToken) {
-        throw new BadRequestException('Invalid refresh token')
+        console.log('estoy aca 2')
+        throw new BadRequestException('Invalid refresh token: Token mismatch')
       }
 
       // Firmar un nuevo token de acceso
-      const payload = { email: user.email }
-      const newAccessToken = await this.jwtService.signAsync(payload, {
-        expiresIn: '1h',
+      const accessTokenPayload = { sub: user.id, email: user.email }
+      const newAccessToken = await this.jwtService.signAsync(
+        accessTokenPayload,
+        {
+          expiresIn: '40m',
+        },
+      )
+
+      // Firmar un nuevo refreshToken
+      const newRefreshTokenPayload = { sub: user.id, email: user.email }
+      const newRefreshToken = await this.jwtService.signAsync(
+        newRefreshTokenPayload,
+        {
+          expiresIn: '1d',
+        },
+      )
+
+      // Actualizar el refreshToken en la base de datos
+      await this.prisma.refreshToken.update({
+        where: { userId: user.id },
+        data: { token: newRefreshToken },
       })
 
+      console.log('Tokens updated in DB, proceeding to return tokens')
+      // Devolver tanto el nuevo accessToken como el nuevo refreshToken
       return {
         accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
       }
     } catch (e) {
-      throw new BadRequestException('Invalid refresh token')
+      console.error('Error refreshing auth token', e)
+
+      throw new BadRequestException(`Invalid refresh token: ${e.message}`)
     }
   }
 }
