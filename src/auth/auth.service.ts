@@ -6,7 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt'
 import { AuthUserDto } from 'src/auth/dto/auth-user.dto'
 import { PrismaService } from 'src/prisma.service'
-
+import * as bcrypt from 'bcrypt'
 @Injectable()
 export class AuthService {
   constructor(
@@ -21,7 +21,11 @@ export class AuthService {
     if (!userExist) {
       throw new NotFoundException('User not found')
     }
-    if (userExist.password !== user.password) {
+    const passwordValid = await bcrypt.compare(
+      user.password,
+      userExist.password,
+    )
+    if (!passwordValid) {
       throw new BadRequestException('Invalid credentials')
     }
 

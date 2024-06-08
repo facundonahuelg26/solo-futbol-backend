@@ -1,15 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
+import {
+  IsEmail,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator'
+import { ENVS } from 'src/environments'
 
 export class CreateUserDto {
-  // @ApiProperty()
-  // @IsString()
-  // @IsNotEmpty()
-  // name: string
-  // @ApiProperty()
-  // @IsString()
-  // @IsNotEmpty()
-  // lastname: string
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  name?: string
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  lastname?: string
+
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -20,4 +30,10 @@ export class CreateUserDto {
   @IsNotEmpty()
   @MinLength(8)
   password: string
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  @IsIn([ENVS.ADMIN_ROLE, ENVS.USER_ROLE])
+  role?: string = 'user'
 }

@@ -56,7 +56,7 @@ export enum Gender {
   Unisex = 'Unisex',
 }
 
-export class CreateProductDto {
+export class UpdateProductDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
