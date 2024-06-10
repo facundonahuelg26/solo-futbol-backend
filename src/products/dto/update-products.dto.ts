@@ -118,4 +118,9 @@ export class UpdateProductDto {
   @IsEnum(Gender)
   @IsNotEmpty()
   gender: Gender
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  team: string
 }

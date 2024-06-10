@@ -31,6 +31,7 @@ model Products {
   highlights  Json
   details     String
   gender      Gender
+  team        String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }

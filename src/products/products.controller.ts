@@ -24,6 +24,8 @@ export class ProductsController {
   async getProducts(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 6,
+    @Query('team') team?: string,
+    @Query('brand') brand?: string,
   ) {
     const pageNumber = parseInt(page as any, 10)
     const limitNumber = parseInt(limit as any, 10)
@@ -31,8 +33,13 @@ export class ProductsController {
     const products = await this.productsService.getProducts(
       pageNumber,
       limitNumber,
+      team,
+      brand,
     )
-    const totalProducts = await this.productsService.getTotalProducts()
+    const totalProducts = await this.productsService.getTotalProducts(
+      team,
+      brand,
+    )
 
     const dataProducts = products.map((product) => {
       return {

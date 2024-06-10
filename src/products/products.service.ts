@@ -7,17 +7,41 @@ import { UpdateProductDto } from 'src/products/dto/update-products.dto'
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  async getProducts(page: number, limit: number) {
+  async getProducts(
+    page: number,
+    limit: number,
+    team?: string,
+    brand?: string,
+  ) {
     const offset = (page - 1) * limit
+    const where: any = {}
+
+    if (team) {
+      where.team = team
+    }
+    if (brand) {
+      where.brand = brand
+    }
+
     const products = await this.prisma.products.findMany({
       skip: offset,
       take: limit,
+      where,
     })
     return products
   }
 
-  async getTotalProducts() {
-    return this.prisma.products.count()
+  async getTotalProducts(team?: string, brand?: string) {
+    const where: any = {}
+
+    if (team) {
+      where.team = team
+    }
+    if (brand) {
+      where.brand = brand
+    }
+
+    return this.prisma.products.count({ where })
   }
 
   createProduct(product: CreateProductDto) {

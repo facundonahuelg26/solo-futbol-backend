@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Products" ALTER COLUMN "team" DROP DEFAULT,
+ALTER COLUMN "team" SET DATA TYPE TEXT;
