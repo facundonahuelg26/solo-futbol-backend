@@ -86,11 +86,6 @@ export class CreateProductDto {
   @IsNotEmpty()
   images: Record<string, any>[]
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  brand: string
-
   @ApiProperty({ type: [Size] })
   @IsArray()
   @ValidateNested({ each: true })
@@ -122,5 +117,9 @@ export class CreateProductDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  team: string
+  brandId: string
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  clubId: string
 }
